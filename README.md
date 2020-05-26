@@ -1,6 +1,9 @@
 # go-eh
 An event handling library in Go
 
+### Installation
+`go get github.com/hetacode/go-eh`
+
 ### Example event implementation:
 ```golang
 type UserEvent struct {
