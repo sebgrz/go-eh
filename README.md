@@ -27,6 +27,7 @@ Now, we can resolve event instance by json string:
 
 ```golang
 json := `{
+  "id": "1",
   "type": "UserEvent",
   "first_name": "John"
 }`
@@ -75,6 +76,7 @@ And the same with EventsMapper together:
 
 ```golang
 json := `{
+  "id": "1",
   "type": "UserEvent",
   "first_name": "John"
 }`
