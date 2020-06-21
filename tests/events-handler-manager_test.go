@@ -58,16 +58,18 @@ func TestCorrectRegisterAndExecuteEventHandlerWithEvent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := manager.Execute(new(TestTwoEvent)); err != nil {
+	if err := manager.Execute(&TestTwoEvent{EventData: &goeh.EventData{ID: "abc123"}}); err != nil {
 		t.Fatal(err)
 	}
 
 	assert.Equal(t, handler1.EventType, "")
 	assert.Equal(t, handler2.EventType, "TestTwoEvent")
+	assert.Equal(t, handler2.EventID, "abc123")
 }
 
 func TestResolveEventFromGivenJsonData(t *testing.T) {
 	json := `{
+		"id": "abc123",
 		"type": "TestTwoEvent",
 		"first_name": "Janusz"
 	}`
@@ -83,6 +85,7 @@ func TestResolveEventFromGivenJsonData(t *testing.T) {
 	}
 
 	// Check correct event type
+	assert.Equal(t, event.GetID(), "abc123")
 	assert.Equal(t, event.GetType(), "TestTwoEvent")
 	assert.NotEqual(t, fmt.Sprintf("%T", event), fmt.Sprintf("%T", new(TestEvent)))
 	assert.Equal(t, fmt.Sprintf("%T", event), fmt.Sprintf("%T", new(TestTwoEvent)))
@@ -91,13 +94,15 @@ func TestResolveEventFromGivenJsonData(t *testing.T) {
 	assert.Equal(t, event.(*TestTwoEvent).FirstName, "Janusz")
 }
 
-func TestResolveSameTwoEventShouldHaveDifferentInstance(t *testing.T) {
+func TestResolveSameTwoEventsShouldHaveDifferentInstance(t *testing.T) {
 	json1 := `{
+		"id": "abc111",
 		"type": "TestTwoEvent",
 		"first_name": "Janusz"
 	}`
 
 	json2 := `{
+		"id": "abc222",
 		"type": "TestTwoEvent",
 		"first_name": "Waldus"
 	}`
@@ -125,6 +130,7 @@ func TestResolveSameTwoEventShouldHaveDifferentInstance(t *testing.T) {
 
 func TestResolveGivenJsonDataAsEventAndCallProperlyEventHandler(t *testing.T) {
 	json := `{
+		"id": "abc123",
 		"type": "TestTwoEvent",
 		"first_name": "Janusz"
 	}`
@@ -156,6 +162,7 @@ func TestResolveGivenJsonDataAsEventAndCallProperlyEventHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 	assert.Equal(t, handler2.UserFirstName, "Janusz")
+	assert.Equal(t, handler2.EventID, "abc123")
 }
 
 // TEST DATA
@@ -194,12 +201,14 @@ func (e *TestEventHandler) Handle(event goeh.Event) {
 
 // TestTwoEventHandler to test correct execution of messages
 type TestTwoEventHandler struct {
+	EventID       string
 	EventType     string
 	UserFirstName string
 }
 
 // Execute message
 func (e *TestTwoEventHandler) Handle(event goeh.Event) {
+	e.EventID = event.GetID()
 	e.EventType = event.GetType()
 	e.UserFirstName = event.(*TestTwoEvent).FirstName
 }
