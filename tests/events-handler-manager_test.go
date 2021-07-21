@@ -58,18 +58,20 @@ func TestCorrectRegisterAndExecuteEventHandlerWithEvent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := manager.Execute(&TestTwoEvent{EventData: &goeh.EventData{ID: "abc123"}}); err != nil {
+	if err := manager.Execute(&TestTwoEvent{EventData: &goeh.EventData{ID: "abc123", CorrelationID: "cor_111"}}); err != nil {
 		t.Fatal(err)
 	}
 
 	assert.Equal(t, handler1.EventType, "")
 	assert.Equal(t, handler2.EventType, "TestTwoEvent")
 	assert.Equal(t, handler2.EventID, "abc123")
+	assert.Equal(t, handler2.CorrelationID, "cor_111")
 }
 
 func TestResolveEventFromGivenJsonData(t *testing.T) {
 	json := `{
 		"id": "abc123",
+		"corr_id": "cor111",
 		"type": "TestTwoEvent",
 		"first_name": "Janusz"
 	}`
@@ -86,6 +88,7 @@ func TestResolveEventFromGivenJsonData(t *testing.T) {
 
 	// Check correct event type
 	assert.Equal(t, event.GetID(), "abc123")
+	assert.Equal(t, event.GetCorrelationID(), "cor111")
 	assert.Equal(t, event.GetType(), "TestTwoEvent")
 	assert.NotEqual(t, fmt.Sprintf("%T", event), fmt.Sprintf("%T", new(TestEvent)))
 	assert.Equal(t, fmt.Sprintf("%T", event), fmt.Sprintf("%T", new(TestTwoEvent)))
@@ -97,12 +100,14 @@ func TestResolveEventFromGivenJsonData(t *testing.T) {
 func TestResolveSameTwoEventsShouldHaveDifferentInstance(t *testing.T) {
 	json1 := `{
 		"id": "abc111",
+		"corr_id": "cor111",
 		"type": "TestTwoEvent",
 		"first_name": "Janusz"
 	}`
 
 	json2 := `{
 		"id": "abc222",
+		"corr_id": "cor222",
 		"type": "TestTwoEvent",
 		"first_name": "Waldus"
 	}`
@@ -121,6 +126,8 @@ func TestResolveSameTwoEventsShouldHaveDifferentInstance(t *testing.T) {
 
 	assert.Equal(t, event1.GetType(), "TestTwoEvent")
 	assert.Equal(t, event2.GetType(), "TestTwoEvent")
+	assert.Equal(t, event1.GetCorrelationID(), "cor111")
+	assert.Equal(t, event2.GetCorrelationID(), "cor222")
 	assert.Equal(t, event1.(*TestTwoEvent).FirstName, "Janusz")
 	assert.Equal(t, event2.(*TestTwoEvent).FirstName, "Waldus")
 	if event1 == event2 {
@@ -131,6 +138,7 @@ func TestResolveSameTwoEventsShouldHaveDifferentInstance(t *testing.T) {
 func TestResolveGivenJsonDataAsEventAndCallProperlyEventHandler(t *testing.T) {
 	json := `{
 		"id": "abc123",
+		"corr_id": "cor112",
 		"type": "TestTwoEvent",
 		"first_name": "Janusz"
 	}`
@@ -163,6 +171,8 @@ func TestResolveGivenJsonDataAsEventAndCallProperlyEventHandler(t *testing.T) {
 	}
 	assert.Equal(t, handler2.UserFirstName, "Janusz")
 	assert.Equal(t, handler2.EventID, "abc123")
+	assert.Equal(t, handler2.CorrelationID, "cor112")
+
 }
 
 // TEST DATA
@@ -202,6 +212,7 @@ func (e *TestEventHandler) Handle(event goeh.Event) {
 // TestTwoEventHandler to test correct execution of messages
 type TestTwoEventHandler struct {
 	EventID       string
+	CorrelationID string
 	EventType     string
 	UserFirstName string
 }
@@ -210,5 +221,6 @@ type TestTwoEventHandler struct {
 func (e *TestTwoEventHandler) Handle(event goeh.Event) {
 	e.EventID = event.GetID()
 	e.EventType = event.GetType()
+	e.CorrelationID = event.GetCorrelationID()
 	e.UserFirstName = event.(*TestTwoEvent).FirstName
 }
