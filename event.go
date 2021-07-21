@@ -8,6 +8,7 @@ import (
 // Event abstraction
 type Event interface {
 	GetID() string
+	GetCorrelationID() string
 	GetType() string
 	GetPayload() string
 	LoadPayload() error
@@ -17,14 +18,20 @@ type Event interface {
 // EventData basic event structure which is use as base of all events
 type EventData struct {
 	Event
-	ID      string `json:"id"`
-	Type    string `json:"type"`
-	Payload string `json:"payload"`
+	ID            string `json:"id"`
+	CorrelationID string `json:"corr_id"`
+	Type          string `json:"type"`
+	Payload       string `json:"payload"`
 }
 
 // GetID of event
 func (m *EventData) GetID() string {
 	return m.ID
+}
+
+// GetCorrelationID of event
+func (m *EventData) GetCorrelationID() string {
+	return m.CorrelationID
 }
 
 // GetType of event
@@ -45,6 +52,7 @@ func (m *EventData) LoadPayload() error {
 	}
 	m.Type = data["type"].(string)
 	m.ID = data["id"].(string)
+	m.CorrelationID = data["corr_id"].(string)
 	return nil
 }
 
@@ -56,6 +64,7 @@ func (m *EventData) SavePayload(event Event) error {
 
 	m.Type = event.GetType()
 	m.ID = event.GetID()
+	m.CorrelationID = event.GetCorrelationID()
 	raw, err := json.Marshal(event)
 	if err != nil {
 		return err
